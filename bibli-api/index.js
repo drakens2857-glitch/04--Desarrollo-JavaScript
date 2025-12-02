@@ -3,13 +3,9 @@ const express = require('express');
 const path = require('path');
 const helmet = require('helmet');
 const cors = require('cors');
-const connectDB = require('./config/database');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
-
-// Connect to DB
-connectDB();
 
 // Middleware
 app.use(helmet());
@@ -31,10 +27,6 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ success: false, mensaje: 'Ruta no encontrada' });
-});
 
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en puerto ${PORT}`);
