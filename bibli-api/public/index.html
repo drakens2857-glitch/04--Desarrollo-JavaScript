@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Biblioteca - CRUD</title>
+  <link rel="stylesheet" href="/style.css" />
+</head>
+
+<body>
+  <main class="container">
+    <h1>Biblioteca</h1>
+    <section class="form-section">
+      <h2>Agregar / Editar Libro</h2>
+      <form id="book-form">
+        <input type="hidden" id="book-id" />
+        <div class="row"><label>Título<input id="titulo" required></input></label></div>
+        <div class="row"><label>Autor<input id="autor" required></input></label></div>
+        <div class="row"><label>ISBN<input id="isbn" required></input></label></div>
+        <div class="row"><label>Género
+            <select id="genero" required>
+              <option value="">--</option>
+              <option>Ficción</option>
+              <option>No Ficción</option>
+              <option>Ciencia</option>
+              <option>Historia</option>
+              <option>Biografía</option>
+              <option>Tecnología</option>
+            </select>
+          </label></div>
+        <div class="row"><label>Fecha publicación<input id="fechaPublicacion" type="date" required></input></label>
+        </div>
+        <div class="row"><label>Páginas<input id="paginas" type="number" min="1" required></input></label></div>
+        <div class="row"><label>Disponible<input id="disponible" type="checkbox" checked></input></label></div>
+        <div class="actions">
+          <button type="submit">Guardar</button>
+          <button type="button" id="reset-btn">Limpiar</button>
+        </div>
+      </form>
+    </section>
+
+    <section class="list-section">
+      <h2>Libros</h2>
+      <div class="controls">
+        <input id="search" placeholder="Buscar por título, autor o ISBN" />
+        <button id="refresh">Refrescar</button>
+      </div>
+      <ul id="books-list"></ul>
+    </section>
+  </main>
+
+  <script>
+    const api = '/api/libros';
+
+    async function fetchLibros(q = '') {
+      const res = await fetch(api + (q ? '?q=' + encodeURIComponent(q) : ''));
+      return res.json();
+    }
+
+    function formatDate(d) { if (!d) return ''; const dt = new Date(d); return dt.toISOString().slice(0, 10); }
+
+    function loadToForm(l) {
+      document.getElementById('book-id').value = l._id;
+      document.getElementById('titulo').value = l.titulo;
+      document.getElementById('autor').value = l.autor;
+      document.getElementById('isbn').value = l.isbn;
+      document.getElementById('genero').value = l.genero;
+      document.getElementById('fechaPublicacion').value = l.fechaPublicacion ? l.fechaPublicacion.slice(0, 10) : '';
+      document.getElementById('paginas').value = l.paginas;
+      document.getElementById('disponible').checked = l.disponible;
+    }
+
+    document.getElementById('book-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = document.getElementById('book-id').value;
+      const payload = {
+        titulo: document.getElementById('titulo').value,
+        autor: document.getElementById('autor').value,
+        isbn: document.getElementById('isbn').value,
+        genero: document.getElementById('genero').value,
+        fechaPublicacion: document.getElementById('fechaPublicacion').value,
+        paginas: parseInt(document.getElementById('paginas').value, 10),
+        disponible: document.getElementById('disponible').checked
+      };
+      const method = id ? 'PUT' : 'POST';
+      const url = id ? api + '/' + id : api;
+      const res = await fetch(url, { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await res.json();
+      alert(data.mensaje || 'Operación completada');
+      document.getElementById('book-form').reset();
+      document.getElementById('book-id').value = '';
+      render();
+    });
+
+    async function eliminar(id) {
+      if (!confirm('Eliminar libro?')) return;
+      const res = await fetch(api + '/' + id, { method: 'DELETE' });
+      const data = await res.json();
+      alert(data.mensaje || 'Eliminado');
+      render();
+    }
+
+    document.getElementById('refresh').addEventListener('click', () => render());
+    document.getElementById('reset-btn').addEventListener('click', () => { document.getElementById('book-form').reset(); document.getElementById('book-id').value = ''; });
+    document.getElementById('search').addEventListener('input', () => render());
+
+    render();
+  </script>
+</body>
+
+</html>
